@@ -286,9 +286,10 @@ end
 local function pth(path)
     local f = path:match("^.+/(.+)$") or path
     local base, ext = f:match("^(.*)(%.[^./\\]+)$")
-    local kept = ext
+    local kept = ""
     if (base and ext and ext == ".lua") then
         path = path:sub(1, #path - #ext)
+        kept = ext
         ext = ".dat"
     else
         ext = ext or ""
