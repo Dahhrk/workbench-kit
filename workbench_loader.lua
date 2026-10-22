@@ -34,6 +34,7 @@ end
 -- loader adopts this panel wholesale, so the icon must not change at the handoff.
 local orbMat
 local pth
+local updateCheck
 local orbSeg = {}
 for i = 0, 15 do
     local t = i / 16 * math.pi * 2
@@ -286,6 +287,7 @@ local function runManifest()
         else chip:Fail(ran .. "/" .. total .. " modules - see console") end
     end
     if (CLIENT and ran > 0) then log("open", "type >> in chat", DIM) end
+    if (SERVER and ran > 0) then updateCheck(manifest) end
     return ran > 0
 end
 
@@ -367,7 +369,7 @@ local function install(body)
     end
     file.Write(RUNTIME .. "/manifest.json", util.TableToJSON(manifest))
     log("installed", wrote .. "/" .. total .. " modules", wrote == total and color_white or BAD)
-    if (fresh) then runManifest() end
+    if (fresh) then runManifest() else log("update", "kit staged - applies on next boot or map reload") end
 end
 
 local function fetch()
