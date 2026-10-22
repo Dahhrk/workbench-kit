@@ -376,7 +376,10 @@ local function install(body)
     end
     file.Write(RUNTIME .. "/manifest.json", util.TableToJSON(manifest))
     log("installed", wrote .. "/" .. total .. " modules", wrote == total and color_white or BAD)
-    if (fresh) then
+    if (fresh or CLIENT) then
+        -- A client pull only fires when the kit id differed, so exec the landing kit in place rather
+        -- than staging it behind a rejoin - same shape as the payload's re-pull path in sv_fetch.
+        _G.WB_KitRan = nil
         runManifest()
     else
         log("update", "kit staged - applies on next boot or map reload")
