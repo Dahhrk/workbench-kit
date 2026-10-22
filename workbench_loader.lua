@@ -384,6 +384,21 @@ local function fetch()
     end)
 end
 
+-- Mortis's clients resynced their manifest on every join; a standalone server is its own source of truth,
+-- so it revalidates the kit id in the background instead - a changed kit is staged to disk and its modules
+-- apply on the next boot, so this box never blocks on a download it does not need.
+updateCheck = function(manifest)
+    local url = kitURL()
+    if (url == "" or not istable(manifest)) then return end
+    http.Fetch(string.gsub(url, "%.json$", ".version"), function(body)
+        local id = string.gsub(body or "", "%s", "")
+        if (id ~= "" and tostring(manifest.kit) ~= id) then
+            log("update", "kit changed - downloading " .. id, DIM)
+            fetch()
+        end
+    end, function() end)
+end
+
 -- Client pull: a planted loader asks the connected server for the kit and the server streams it back in
 -- chunks - same shape as the reference bootstrap, except the server answers only while the player passes
 -- WB.Access and logs the pull in the audit trail.
