@@ -4,7 +4,7 @@
 -- fetches the kit json made by obsidian_workbench_exportkit, writes the modules to data/obsidian_workbench/runtime/,
 -- and runs them for this realm. Every boot after runs from disk - the fetch is one-time only. When the real
 -- gamemode's own workbench is loaded this loader stands down and does nothing.
-local KIT_URL = ""
+local KIT_URL = "https://raw.githubusercontent.com/Dahhrk/obsidian-kit/main/obsidian_kit.json"
 local RUNTIME = "obsidian_workbench/runtime"
 local ACCENT = Color(255, 46, 46)
 local DIM = Color(140, 140, 140)
