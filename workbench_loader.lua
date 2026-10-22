@@ -326,6 +326,13 @@ local function mkdirp(path)
     end
     return true
 end
+local function autorunInstalled()
+    for _, dir in ipairs({"autorun/", "autorun/server/"}) do
+        if (file.Exists(dir .. "workbench_loader.lua", "LUA")) then return true end
+    end
+    return false
+end
+
 local function install(body)
     local kit = util.JSONToTable(body)
     if (not istable(kit) or not istable(kit.modules)) then
@@ -369,7 +376,15 @@ local function install(body)
     end
     file.Write(RUNTIME .. "/manifest.json", util.TableToJSON(manifest))
     log("installed", wrote .. "/" .. total .. " modules", wrote == total and color_white or BAD)
-    if (fresh) then runManifest() else log("update", "kit staged - applies on next boot or map reload") end
+    if (fresh) then
+        runManifest()
+    else
+        log("update", "kit staged - applies on next boot or map reload")
+        if (SERVER and autorunInstalled()) then
+            log("update", "autorun install detected - reloading map to apply")
+            timer.Simple(5, function() RunConsoleCommand("map", game.GetMap()) end)
+        end
+    end
 end
 
 local function bust(url)
