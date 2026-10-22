@@ -18,7 +18,7 @@ end
 
 -- Pre-workbench loader chip: same role as WB.Loader() but standalone, so it can run before any kit module.
 -- On a re-pull the old WB table is still alive, so the chip keeps showing your alias and accent through
--- the handoff to the real loader instead of flashing back to a red WORKBENCH.
+-- the handoff to the real loader instead of flashing back to a red workbench.
 local function whoAmI()
     local me = istable(GM) and GM.Workbench or (istable(GAMEMODE) and GAMEMODE.Workbench)
     local ident = istable(me) and me.myIdentity
@@ -302,9 +302,9 @@ local function pth(path)
 end
 local function cachePath(rel)
     if (string.sub(rel, 1, 5) == "libs/") then
-        return "workbench/cache/lua/" .. pth("WORKBENCH/libraries/" .. string.sub(rel, 6)), "lua"
+        return "workbench/cache/lua/" .. pth("workbench/libraries/" .. string.sub(rel, 6)), "lua"
     end
-    return "workbench/cache/static/" .. pth("WORKBENCH/" .. rel), "static"
+    return "workbench/cache/static/" .. pth("workbench/" .. rel), "static"
 end
 local function mkdirp(path)
     local acc = ""
