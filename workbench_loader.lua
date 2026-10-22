@@ -372,13 +372,17 @@ local function install(body)
     if (fresh) then runManifest() else log("update", "kit staged - applies on next boot or map reload") end
 end
 
+local function bust(url)
+    return url .. (string.find(url, "?", 1, true) and "&" or "?") .. "v=" .. os.time()
+end
+
 local function fetch()
     local url = kitURL()
     if (url == "") then log("fetch", "no kit url - set workbench_kit_url or data/workbench/kit_url.txt", BAD) return end
     stage("fetching", -1)
     log("fetch", "workbench_kit.json")
     log("source", url, DIM)
-    http.Fetch(url, install, function(err)
+    http.Fetch(bust(url), install, function(err)
         log("fetch", tostring(err), BAD)
         if (IsValid(chip)) then chip:Fail("fetch failed") end
     end)
@@ -390,7 +394,7 @@ end
 updateCheck = function(manifest)
     local url = kitURL()
     if (url == "" or not istable(manifest)) then return end
-    http.Fetch(string.gsub(url, "%.json$", ".version"), function(body)
+    http.Fetch(bust(string.gsub(url, "%.json$", ".version")), function(body)
         local id = string.gsub(body or "", "%s", "")
         if (id ~= "" and tostring(manifest.kit) ~= id) then
             log("update", "kit changed - downloading " .. id, DIM)
