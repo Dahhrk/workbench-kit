@@ -1,11 +1,11 @@
 -- Workbench kit loader: the standalone install option for a server that does not run the Obsidian
 -- gamemode or framework. Drop this file in garrysmod/lua/autorun/ and set the kit url once - convar
--- obsidian_workbench_kit_url, data/obsidian_workbench/kit_url.txt, or the KIT_URL constant below. First boot
--- fetches the kit json made by obsidian_workbench_exportkit, writes the modules to data/obsidian_workbench/runtime/,
+-- workbench_kit_url, data/workbench/kit_url.txt, or the KIT_URL constant below. First boot
+-- fetches the kit json made by workbench_exportkit, writes the modules to data/workbench/runtime/,
 -- and runs them for this realm. Every boot after runs from disk - the fetch is one-time only. When the real
 -- gamemode's own workbench is loaded this loader stands down and does nothing.
-local KIT_URL = "https://raw.githubusercontent.com/Dahhrk/workbench-kit/main/workbench_kit.json"
-local RUNTIME = "obsidian_workbench/runtime"
+local KIT_URL = ""
+local RUNTIME = "workbench/runtime"
 local ACCENT = Color(255, 46, 46)
 local DIM = Color(140, 140, 140)
 local BAD = Color(255, 96, 96)
@@ -18,12 +18,12 @@ end
 
 -- Pre-workbench loader chip: same role as WB.Loader() but standalone, so it can run before any kit module.
 -- On a re-pull the old WB table is still alive, so the chip keeps showing your alias and accent through
--- the handoff to the real loader instead of flashing back to a red OBSIDIAN.
+-- the handoff to the real loader instead of flashing back to a red WORKBENCH.
 local function whoAmI()
     local me = istable(GM) and GM.Workbench or (istable(GAMEMODE) and GAMEMODE.Workbench)
     local ident = istable(me) and me.myIdentity
     if (not istable(ident)) then
-        local stored = util.JSONToTable(file.Read("obsidian_workbench/identity.json", "DATA") or "")
+        local stored = util.JSONToTable(file.Read("workbench/identity.json", "DATA") or "")
         ident = istable(stored) and stored or nil
     end
     local alias = (istable(ident) and ident.alias) or "Workbench"
@@ -32,7 +32,7 @@ local function whoAmI()
 end
 -- Orb icon identical to cl_board's drawOrbIcon: accent glow, specular core, orbiting arc. The workbench
 -- loader adopts this panel wholesale, so the icon must not change at the handoff.
-local orbMat = Material("obsidian/workbench/orbs64.png", "smooth")
+local orbMat = Material("workbench/orbs64.png", "smooth")
 local orbSeg = {}
 for i = 0, 15 do
     local t = i / 16 * math.pi * 2
@@ -173,7 +173,7 @@ local function ensureChip()
         timer.Simple(4, function() if (IsValid(chip)) then chip.FadeOut = true end end)
     end
     _G.WB_BootChip = chip
-    concommand.Add("obsidian_workbench_hideui", function()
+    concommand.Add("workbench_hideui", function()
         if (IsValid(chip)) then chip:Remove() end
         local w = istable(GM) and GM.Workbench
         if (istable(w) and w.LoaderHide) then w.LoaderHide() end
@@ -198,9 +198,9 @@ local function bundled()
 end
 
 local function kitURL()
-    local cvar = GetConVar and GetConVar("obsidian_workbench_kit_url")
+    local cvar = GetConVar and GetConVar("workbench_kit_url")
     local url = cvar and cvar:GetString() or ""
-    if (url == "") then url = file.Read("obsidian_workbench/kit_url.txt", "DATA") or "" end
+    if (url == "") then url = file.Read("workbench/kit_url.txt", "DATA") or "" end
     url = string.gsub(url, "%s+$", "")
     if (url == "") then url = KIT_URL end
     return url
@@ -213,7 +213,7 @@ end
 local function execModule(m, ran, total)
     local code = file.Read(RUNTIME .. "/" .. tostring(m.file or ""), "DATA")
     if (not code) then log("module", m.name .. " - missing " .. tostring(m.file), BAD) return false end
-    local fn = CompileString(code, "obsidian_kit/" .. m.name .. ".lua", false)
+    local fn = CompileString(code, "workbench_kit/" .. m.name .. ".lua", false)
     if (not isfunction(fn)) then log("module", m.name .. " - " .. tostring(fn), BAD) return false end
     local ok, err = pcall(fn)
     if (not ok) then log("module", m.name .. " - " .. tostring(err), BAD) return false end
@@ -302,9 +302,9 @@ local function pth(path)
 end
 local function cachePath(rel)
     if (string.sub(rel, 1, 5) == "libs/") then
-        return "obsidian_workbench/cache/lua/" .. pth("OBSIDIAN/libraries/" .. string.sub(rel, 6)), "lua"
+        return "workbench/cache/lua/" .. pth("WORKBENCH/libraries/" .. string.sub(rel, 6)), "lua"
     end
-    return "obsidian_workbench/cache/static/" .. pth("OBSIDIAN/" .. rel), "static"
+    return "workbench/cache/static/" .. pth("WORKBENCH/" .. rel), "static"
 end
 local function mkdirp(path)
     local acc = ""
@@ -325,7 +325,7 @@ local function install(body)
     log("install", #kit.modules .. " modules")
     local fresh = not file.Exists(RUNTIME .. "/manifest.json", "DATA")
     if (not mkdirp(RUNTIME)) then if (IsValid(chip)) then chip:Fail("write blocked") end return end
-    local manifest = {name = kit.name or "obsidian_workbench", version = kit.version or os.time(), kit = tostring(kit.id or "0"), modules = {}}
+    local manifest = {name = kit.name or "workbench", version = kit.version or os.time(), kit = tostring(kit.id or "0"), modules = {}}
     local wrote, total = 0, #kit.modules
     for i, m in ipairs(kit.modules) do
         local code = util.Base64Decode(tostring(m.code or ""))
@@ -342,9 +342,9 @@ local function install(body)
     end
     local page, shell = util.Base64Decode(tostring(kit.page or "")), util.Base64Decode(tostring(kit.shell or ""))
     if (page and shell) then
-        file.CreateDir("obsidian_workbench")
-        file.Write("obsidian_workbench/page.txt", page)
-        file.Write("obsidian_workbench/shell.txt", shell)
+        file.CreateDir("workbench")
+        file.Write("workbench/page.txt", page)
+        file.Write("workbench/shell.txt", shell)
     end
     for rel, b64 in pairs(kit.files or {}) do
         maybeYield()
@@ -363,9 +363,9 @@ end
 
 local function fetch()
     local url = kitURL()
-    if (url == "") then log("fetch", "no kit url - set obsidian_workbench_kit_url or data/obsidian_workbench/kit_url.txt", BAD) return end
+    if (url == "") then log("fetch", "no kit url - set workbench_kit_url or data/workbench/kit_url.txt", BAD) return end
     stage("fetching", -1)
-    log("fetch", "obsidian_kit.json")
+    log("fetch", "workbench_kit.json")
     log("source", url, DIM)
     http.Fetch(url, install, function(err)
         log("fetch", tostring(err), BAD)
@@ -376,7 +376,7 @@ end
 -- Client pull: a planted loader asks the connected server for the kit and the server streams it back in
 -- chunks - same shape as the reference bootstrap, except the server answers only while the player passes
 -- WB.Access and logs the pull in the audit trail.
-local KIT_NET = "Obsidian.Workbench.Kit"
+local KIT_NET = "Workbench.Kit"
 local incoming
 
 -- Self-clocked pull: each answered chunk triggers the next request, so at most one message is ever in
@@ -431,7 +431,7 @@ end
 
 local function boot()
     if (bundled()) then return end
-    if (SERVER) then CreateConVar("obsidian_workbench_kit_url", KIT_URL, FCVAR_ARCHIVE, "URL of the workbench kit json") end
+    if (SERVER) then CreateConVar("workbench_kit_url", KIT_URL, FCVAR_ARCHIVE, "URL of the workbench kit json") end
     -- Sandbox can never host the gamemode-layer workbench, so there is nothing to wait for. Elsewhere a
     -- mounted framework can still be mid-load when this fires - give the live check a window to settle.
     if (engine.ActiveGamemode and engine.ActiveGamemode() == "sandbox") then return go() end
@@ -445,7 +445,7 @@ end
 
 timer.Simple(1, boot)
 
-concommand.Add("obsidian_workbench_kit_update", function(ply)
+concommand.Add("workbench_kit_update", function(ply)
     if (IsValid(ply) and not ply:IsSuperAdmin()) then return end
     log("pull", "checking for kit update")
     if (CLIENT) then pull() else fetch() end
