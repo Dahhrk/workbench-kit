@@ -32,7 +32,8 @@ local function whoAmI()
 end
 -- Orb icon identical to cl_board's drawOrbIcon: accent glow, specular core, orbiting arc. The workbench
 -- loader adopts this panel wholesale, so the icon must not change at the handoff.
-local orbMat = Material("workbench/orbs64.png", "smooth")
+local orbMat
+local pth
 local orbSeg = {}
 for i = 0, 15 do
     local t = i / 16 * math.pi * 2
@@ -63,6 +64,14 @@ local function drawOrbIcon(cx, cy, acc, a)
     orbDisc(cx, cy, 9.5, Color(acc.r, acc.g, acc.b, a * 0.10))
     orbDisc(cx, cy, 7.8, Color(acc.r, acc.g, acc.b, a * 0.18))
     orbArc(cx, cy, 8.7, 7.3, CurTime() * 220 % 360, 130, Color(acc.r, acc.g, acc.b, a))
+    if (not orbMat or orbMat:IsError()) then
+        orbMat = Material("workbench/orbs64.png", "smooth")
+        -- Standalone has no materials tree; the pack static lands in the Mortis-shaped cache instead.
+        if (orbMat:IsError() and pth) then
+            local rel = "workbench/cache/static/" .. pth("Workbench/icon/orbs64.png")
+            if (file.Exists(rel, "DATA")) then orbMat = Material("../data/" .. rel, "smooth") end
+        end
+    end
     if (not orbMat:IsError()) then
         surface.SetDrawColor(255, 255, 255, a)
         surface.SetMaterial(orbMat)
@@ -283,7 +292,7 @@ end
 -- Mortis's storage mediums verbatim: lua entries land compressed under cache/lua, statics raw under
 -- cache/static, both addressed by their PTH'd package virtual so a kit-installed file reads as an
 -- already-cached entry when the checksum sweep runs - no second pull for what the kit just shipped.
-local function pth(path)
+pth = function(path)
     local f = path:match("^.+/(.+)$") or path
     local base, ext = f:match("^(.*)(%.[^./\\]+)$")
     local kept = ""
