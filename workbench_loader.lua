@@ -202,6 +202,9 @@ local function stage(text, progress)
 end
 
 local function bundled()
+    -- A kit this loader executed also populates GM.Workbench.DATA - only the framework's own mount should
+    -- stand the loader down, or every re-run after the first exec would no-op here.
+    if (_G.WB_KitRan) then return false end
     if (istable(GM) and istable(GM.Workbench) and GM.Workbench.DATA ~= nil) then return true end
     if (istable(GAMEMODE) and istable(GAMEMODE.Workbench) and GAMEMODE.Workbench.DATA ~= nil) then return true end
     if (not file.Exists("obsidian/gamemode/modules/base/workbench/_loader.lua", "LUA")) then return false end
