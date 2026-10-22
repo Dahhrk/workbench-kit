@@ -35,6 +35,10 @@ end
 local orbMat
 local pth
 local updateCheck
+local pull
+local bust
+local fetch
+local reexecRequested
 local orbSeg = {}
 for i = 0, 15 do
     local t = i / 16 * math.pi * 2
@@ -253,15 +257,38 @@ local function stepThrough(fn)
 end
 
 local function runManifest()
-    if (_G.WB_KitRan or bundled()) then
-        if (IsValid(chip)) then
-            if (_G.WB_KitRan) then
-                chip:Say("updated - map reload to apply", 1)
-                timer.Simple(3, function() if (IsValid(chip)) then chip.FadeOut = true end end)
-            else
-                chip.FadeOut = true
-            end
+    if (bundled()) then
+        if (IsValid(chip)) then chip.FadeOut = true end
+        return true
+    end
+    if (_G.WB_KitRan) then
+        if (IsValid(chip)) then chip.FadeOut = true end
+        -- An explicit re-run is an operator reload, not a second boot: lift the latch and apply what
+        -- is on disk. The automatic path still stages silently; asking again means apply now.
+        if (CLIENT) then
+            _G.WB_KitRan = nil
+            pull()
+            return true
         end
+        reexecRequested = true
+        local function reexec()
+            _G.WB_KitRan = nil
+            reexecRequested = nil
+            runManifest()
+        end
+        local url = kitURL()
+        if (url == "") then reexec() return true end
+        local raw = file.Read(RUNTIME .. "/manifest.json", "DATA")
+        local manifest = raw and util.JSONToTable(raw) or nil
+        http.Fetch(bust(string.gsub(url, "%.json$", ".version")), function(body)
+            local id = string.gsub(body or "", "%s", "")
+            if (id ~= "" and istable(manifest) and tostring(manifest.kit) ~= id) then
+                log("update", "kit changed - downloading " .. id, DIM)
+                fetch()
+            else
+                reexec()
+            end
+        end, reexec)
         return true
     end
     local raw = file.Read(RUNTIME .. "/manifest.json", "DATA")
@@ -376,10 +403,11 @@ local function install(body)
     end
     file.Write(RUNTIME .. "/manifest.json", util.TableToJSON(manifest))
     log("installed", wrote .. "/" .. total .. " modules", wrote == total and color_white or BAD)
-    if (fresh or CLIENT) then
+    if (fresh or CLIENT or reexecRequested) then
         -- A client pull only fires when the kit id differed, so exec the landing kit in place rather
         -- than staging it behind a rejoin - same shape as the payload's re-pull path in sv_fetch.
         _G.WB_KitRan = nil
+        reexecRequested = nil
         runManifest()
     else
         log("update", "kit staged - applies on next boot or map reload")
@@ -390,11 +418,11 @@ local function install(body)
     end
 end
 
-local function bust(url)
+bust = function(url)
     return url .. (string.find(url, "?", 1, true) and "&" or "?") .. "v=" .. os.time()
 end
 
-local function fetch()
+fetch = function()
     local url = kitURL()
     if (url == "") then log("fetch", "no kit url - set workbench_kit_url or data/workbench/kit_url.txt", BAD) return end
     stage("fetching", -1)
@@ -435,7 +463,7 @@ local function pullChunk(i)
     net.SendToServer()
 end
 
-local function pull()
+pull = function()
     incoming = nil
     pullChunk(0)
     stage("requesting kit", -1)
