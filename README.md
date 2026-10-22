@@ -1,9 +1,9 @@
-# obsidian-kit
+# workbench-kit
 
-Obsidian Workbench kit distribution. Drop `obsidian_loader.lua` in `garrysmod/lua/autorun/`, then either set `obsidian_workbench_kit_url` to the kit URL or write it to `data/obsidian_workbench/kit_url.txt`. First boot fetches the kit once and installs 33 modules to `data/obsidian_workbench/runtime/`.
-
-Kit URL:
+Standalone workbench kit distribution. One-liner bootstrap (client console):
 
 ```
-https://raw.githubusercontent.com/Dahhrk/obsidian-kit/main/obsidian_kit.json
+lua_run_cl http.Fetch("https://raw.githubusercontent.com/Dahhrk/workbench-kit/main/workbench_loader.lua",function(b)RunString(b)end)
 ```
+
+Or drop `workbench_loader.lua` in `garrysmod/lua/autorun/` - the kit URL is baked in. First boot pulls the kit from the server (or fetches the URL) and installs 33 modules to `data/obsidian_workbench/runtime/`.
