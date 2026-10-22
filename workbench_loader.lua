@@ -358,7 +358,9 @@ local function mkdirp(path)
 end
 local function autorunInstalled()
     for _, dir in ipairs({"autorun/", "autorun/server/"}) do
-        if (file.Exists(dir .. "workbench_loader.lua", "LUA")) then return true end
+        for _, name in ipairs({"workbench_loader.lua", "workbench_autorun.lua"}) do
+            if (file.Exists(dir .. name, "LUA")) then return true end
+        end
     end
     return false
 end
